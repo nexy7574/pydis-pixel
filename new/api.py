@@ -29,14 +29,19 @@ def resizeOption(img, canvas_width, canvas_height):
 
 
 def set_pixel(*at: int, colour: str, token: str):
-    print(
-        f"{Fore.RED}[DEBUG] {Fore.LIGHTBLACK_EX}Args for setting pixel: at={at} colour={colour} token={{no}}"
-    )
-    response = requests.post(
-        "https://pixels.pythondiscord.com/set_pixel",
-        json={"x": at[0], "y": at[1], "rgb": colour},
-        headers={"Authorization": "Bearer " + token},
-    )
+    if "dev" in sys.argv:
+        print(
+            f"{Fore.RED}[DEBUG] {Fore.LIGHTBLACK_EX}Args for setting pixel: at={at} colour={colour} token={{no}}"
+        )
+    try:
+        response = requests.post(
+            "https://pixels.pythondiscord.com/set_pixel",
+            json={"x": at[0], "y": at[1], "rgb": colour},
+            headers={"Authorization": "Bearer " + token},
+        )
+    except (requests.HTTPError, requests.HTTPError, requests.RequestException):
+        print(f"{Fore.YELLOW}[WARNING] {Fore.WHITE}Exception while setting a pixel. Retrying.")
+        return set_pixel(*at, colour=colour, token=token)
     handle_sane_ratelimit(response)
     if response.status_code == 429:
         # try again
@@ -53,7 +58,7 @@ def handle_sane_ratelimit(res):
     remaining = int(res.headers.get("requests-remaining", 0))
     if res.status_code == 429:
         reset = float(res.headers["cooldown-reset"])
-        print(f"{Fore.RED}[RATELIMITER] {Fore.LIGHTRED_EX}On hard cooldown for", reset, "seconds.",
+        print(f"{Fore.CYAN}[RATELIMITER] {Fore.LIGHTRED_EX}On hard cooldown for", reset, "seconds.",
               file=sys.stderr)
         time.sleep(reset)
     else:
@@ -65,5 +70,5 @@ def handle_sane_ratelimit(res):
                       f" headers, here's a list of them:\n" + "\n".join(f"{k}: {v}" for k, v in res.headers.items()),
                       "\nJust going to pretend it doesn't exist.")
                 return
-            print(f"{Fore.RED}[RATELIMITER] {Fore.LIGHTYELLOW_EX}On soft cooldown for", reset, "seconds.")
+            print(f"{Fore.CYAN}[RATELIMITER] {Fore.LIGHTYELLOW_EX}On soft cooldown for", reset, "seconds.")
             time.sleep(reset)
