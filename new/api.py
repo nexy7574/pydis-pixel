@@ -51,7 +51,6 @@ def set_pixel(*at: int, colour: str, token: str):
     if response.status_code != 200:
         print(f"{Fore.RED}[ERROR] {Fore.LIGHTWHITE_EX}Non-200 pixel set code. "
               f"Data:\n{json.dumps(response.json(), indent=2)}")
-        response.raise_for_status()
 
 
 def handle_sane_ratelimit(res):

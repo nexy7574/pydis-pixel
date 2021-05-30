@@ -1,3 +1,4 @@
+import datetime
 import sys
 from typing import Dict, Tuple, List
 import requests
@@ -61,7 +62,8 @@ canvas_cursor: List[int] = [start_x - 1, start_y - 1]
 image_cursor: List[int] = [-1, -1]
 painted = 0
 
-print(Fore.YELLOW + "[CURSOR] ", Fore.CYAN + "Beginning paint...")
+print(Fore.YELLOW + "[CURSOR] ", Fore.CYAN + "Beginning paint. It will likely finish at",
+      (datetime.datetime.now() + datetime.timedelta(seconds=len(pixels_array))).strftime("%X"))
 for y in range(pilImage.height):
     canvas_cursor[1] += 1
     image_cursor[1] += 1
