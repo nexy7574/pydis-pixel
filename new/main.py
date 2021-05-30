@@ -24,8 +24,8 @@ end_x, end_y = map(int, input("Cursor will end at: ").split(","))
 
 assert end_x > start_x, "end x is smaller than start x."
 assert end_y >= start_y, "end y is smaller than start y"
-image_width = end_x - start_x
-image_height = end_y - start_y
+image_width = (end_x - start_x) - 1
+image_height = (end_y - start_y) - 1
 
 image_path = input("Image path (provide URL for download): ")
 if image_path.startswith("http"):
