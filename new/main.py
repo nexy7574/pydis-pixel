@@ -58,34 +58,53 @@ for e in pixels_array:
     if "dev" in sys.argv:
         print(Fore.RED + "[DEBUG] " + Fore.LIGHTBLACK_EX + "hex:", _hex)
 
-canvas_cursor: List[int] = [start_x - 1, start_y - 1]
-image_cursor: List[int] = [-1, -1]
-painted = 0
 
-print(Fore.YELLOW + "[CURSOR] ", Fore.CYAN + "Beginning paint. It will likely finish at",
-      (datetime.datetime.now() + datetime.timedelta(seconds=len(pixels_array))).strftime("%X"))
-for y in range(pilImage.height):
-    canvas_cursor[1] += 1
-    image_cursor[1] += 1
-    for x in range(pilImage.width):
-        canvas_cursor[0] += 1
-        image_cursor[0] += 1
-        # noinspection PyTypeChecker
-        try:
-            colour = pixels_map[tuple(image_cursor)]
-        except KeyError:
-            if "dev" in sys.argv:
-                print(
-                    Fore.RED+"[DEBUG] {} is not in colour map? Going to continue.".format(str(image_cursor))
-                )
-        print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTYELLOW_EX + " Painting {} #{}.".format(str(canvas_cursor), colour))
-        set_pixel(*canvas_cursor, colour=colour, token=token)
-        painted += 1
-        pct = round((painted / len(pixels_array)) * 100, 2)
-        print(
-            Fore.YELLOW
-            + "[CURSOR] "
-            + Fore.LIGHTGREEN_EX
-            + "Painted {} #{}. {}% done.".format(str(canvas_cursor), colour, pct)
-        )
-print(Fore.YELLOW + "[CURSOR] ", Fore.LIGHTGREEN_EX + "Done!")
+def paint():
+    canvas_cursor: List[int] = [start_x - 1, start_y - 1]
+    image_cursor: List[int] = [-1, -1]
+    painted = 0
+
+    print(Fore.YELLOW + "[CURSOR] ", Fore.CYAN + "Beginning paint. It will likely finish at",
+          (datetime.datetime.now() + datetime.timedelta(seconds=len(pixels_array))).strftime("%X"))
+    for y in range(pilImage.height):
+        canvas_cursor[1] += 1
+        image_cursor[1] += 1
+        for x in range(pilImage.width):
+            canvas_cursor[0] += 1
+            image_cursor[0] += 1
+            # noinspection PyTypeChecker
+            try:
+                colour = pixels_map[tuple(image_cursor)]
+            except KeyError:
+                if "dev" in sys.argv:
+                    print(
+                        Fore.RED+"[DEBUG] {} is not in colour map? Going to continue.".format(str(image_cursor))
+                    )
+                    continue
+            print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTYELLOW_EX + " Painting {} #{}.".format(str(canvas_cursor),
+                                                                                               colour))
+            set_pixel(*canvas_cursor, colour=colour, token=token)
+            painted += 1
+            pct = round((painted / len(pixels_array)) * 100, 2)
+            print(
+                Fore.YELLOW
+                + "[CURSOR] "
+                + Fore.LIGHTGREEN_EX
+                + "Painted {} #{}. {}% done.".format(str(canvas_cursor), colour, pct)
+            )
+    print(Fore.YELLOW + "[CURSOR] ", Fore.LIGHTGREEN_EX + "Done!")
+
+
+if "loop" in sys.argv:
+    if len(sys.argv) >= 3:
+        count = int(sys.argv[2])
+        print("looping {} times".format(count))
+        for i in range(count):
+            paint()
+    else:
+        print("looping \N{infinity} times")
+        while True:
+            paint()
+else:
+    print("Running one-shot")
+    paint()
