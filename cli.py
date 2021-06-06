@@ -3,19 +3,23 @@ from pathlib import Path
 
 
 def path_like(i: str):
+    if i.startswith("http"):
+        # I is a URL
+        return i
     p = Path(i).resolve()
     assert p.exists(), "Invalid path"
     return p
 
 
 def loop_validator(v: str):
-    if v.lower() == "once":
-        return
     if v.isdigit():
         return int(v)
-    if v.lower() in ["no", "false", "never", "0"]:
-        return False
-    return "infinity"
+    elif v.lower() in ["infinity", "infinite", "forever", "24/7"]:
+        return True
+    elif v.lower() == "once":
+        return
+    else:
+        raise ValueError(v, "is not a recognised loop count. Try \"once\", a number, or \"forever\".")
 
 
 parser = ArgumentParser()
@@ -31,7 +35,7 @@ parser.add_argument(
     "-L",
     action="store",
     required=False,
-    default=...,
+    default=None,
     type=loop_validator,
     help="How may times to loop self. If you don't pass an argument, this will loop forever."
 )
