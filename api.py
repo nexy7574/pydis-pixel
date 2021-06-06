@@ -30,26 +30,20 @@ def resizeOption(img, canvas_width, canvas_height):
 
 def set_pixel(*at: int, colour: str, token: str, base: str = "https://pixels.pythondiscord.com"):
     if "dev" in sys.argv:
-        print(
-            f"{Fore.RED}[DEBUG] {Fore.LIGHTBLACK_EX}Args for setting pixel: at={at} colour={colour} token={{no}}"
-        )
+        print(f"{Fore.RED}[DEBUG] {Fore.LIGHTBLACK_EX}Args for setting pixel: at={at} colour={colour} token={{no}}")
     try:
         response = requests.post(
-            base+"/set_pixel",
+            base + "/set_pixel",
             json={"x": at[0], "y": at[1], "rgb": colour},
             headers={"Authorization": "Bearer " + token},
         )
     except (requests.HTTPError, requests.HTTPError, requests.RequestException):
-        print(
-            f"{Fore.YELLOW}[WARNING] {Fore.WHITE}Exception while setting a pixel. Retrying."
-        )
+        print(f"{Fore.YELLOW}[WARNING] {Fore.WHITE}Exception while setting a pixel. Retrying.")
         return set_pixel(*at, colour=colour, token=token)
     handle_sane_ratelimit(response)
     if response.status_code == 429:
         # try again
-        print(
-            f"{Fore.CYAN}[API] {Fore.LIGHTRED_EX}set_pixel call previously failed due to ratelimit. Retrying {at}."
-        )
+        print(f"{Fore.CYAN}[API] {Fore.LIGHTRED_EX}set_pixel call previously failed due to ratelimit. Retrying {at}.")
         set_pixel(*at, colour=colour, token=token)
         return
     if response.status_code != 200:
@@ -59,10 +53,7 @@ def set_pixel(*at: int, colour: str, token: str, base: str = "https://pixels.pyt
                 f"Data:\n{json.dumps(response.json(), indent=2)}"
             )
         else:
-            print(
-                f"{Fore.RED}[ERROR] {Fore.LIGHTWHITE_EX}Non-200 pixel set code. "
-                f"Data:\n{response.text}"
-            )
+            print(f"{Fore.RED}[ERROR] {Fore.LIGHTWHITE_EX}Non-200 pixel set code. " f"Data:\n{response.text}")
 
 
 def handle_sane_ratelimit(res):
@@ -83,8 +74,7 @@ def handle_sane_ratelimit(res):
             except KeyError:
                 print(
                     f"{Fore.RED}[DEBUG][RATELIMITER] {Fore.LIGHTBLACK_EX} Some whacky shit is going on with"
-                    f" headers, here's a list of them:\n"
-                    + "\n".join(f"{k}: {v}" for k, v in res.headers.items()),
+                    f" headers, here's a list of them:\n" + "\n".join(f"{k}: {v}" for k, v in res.headers.items()),
                     "\nJust going to pretend it doesn't exist.",
                 )
                 return

@@ -18,9 +18,7 @@ with open("./auth.txt") as auth:
 
 base = "https://pixels.pythondiscord.com"
 print(Fore.LIGHTBLUE_EX + "[RATELIMIT] " + Fore.LIGHTGREEN_EX + "Syncing ratelimit...")
-handle_sane_ratelimit(
-    requests.head(base + "/set_pixel", headers={"Authorization": "Bearer " + token})
-)
+handle_sane_ratelimit(requests.head(base + "/set_pixel", headers={"Authorization": "Bearer " + token}))
 canvas_size_response = requests.get(base + "/get_size").json()
 canvas_width = int(canvas_size_response["width"])
 canvas_height = int(canvas_size_response["height"])
@@ -38,9 +36,7 @@ image_height = (end_y - start_y) - 1
 image_path = input("Image path (provide URL for download): ")
 if image_path.startswith("http"):
     image_response = requests.get(image_path)
-    assert (
-        image_response.headers["Content-Type"] == "image/png"
-    ), "Incorrect image type."
+    assert image_response.headers["Content-Type"] == "image/png", "Incorrect image type."
     with open("image_download.png", "wb+") as download:
         download.write(image_response.content)
         image_bytes = image_response.content
@@ -58,12 +54,7 @@ pixels_map: Dict[Tuple[int, int], str] = {}
 for e in pixels_array:
     r, g, b, *_ = e[2]
     if "dev" in sys.argv:
-        print(
-            Fore.RED
-            + "[DEBUG] "
-            + Fore.LIGHTBLACK_EX
-            + "R: {} G: {} B: {} _: {}".format(r, g, b, _)
-        )
+        print(Fore.RED + "[DEBUG] " + Fore.LIGHTBLACK_EX + "R: {} G: {} B: {} _: {}".format(r, g, b, _))
     _hex = ""
     _hex += hex(r).replace("0x", "").zfill(2)
     _hex += hex(g).replace("0x", "").zfill(2)
@@ -81,9 +72,7 @@ def paint():
     print(
         Fore.YELLOW + "[CURSOR] ",
         Fore.CYAN + "Beginning paint. It will likely finish at",
-        (
-            datetime.datetime.now() + datetime.timedelta(seconds=len(pixels_array))
-        ).strftime("%X"),
+        (datetime.datetime.now() + datetime.timedelta(seconds=len(pixels_array))).strftime("%X"),
     )
     for x, y in pixels_map.keys():
         # noinspection PyTypeChecker
@@ -91,28 +80,13 @@ def paint():
             colour = pixels_map[(x, y)]
         except KeyError:
             if "dev" in sys.argv:
-                print(
-                    Fore.RED
-                    + "[DEBUG] {} is not in colour map? Going to continue.".format(
-                        str(image_cursor)
-                    )
-                )
+                print(Fore.RED + "[DEBUG] {} is not in colour map? Going to continue.".format(str(image_cursor)))
                 continue
-        print(
-            Fore.YELLOW
-            + "[CURSOR] "
-            + Fore.LIGHTYELLOW_EX
-            + "Painting {} #{}.".format((x, y), colour)
-        )
-        set_pixel(x+start_x, y+start_y, colour=colour, token=token, base=base)
+        print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTYELLOW_EX + "Painting {} #{}.".format((x, y), colour))
+        set_pixel(x + start_x, y + start_y, colour=colour, token=token, base=base)
         painted += 1
         pct = round((painted / len(pixels_array)) * 100, 2)
-        print(
-            Fore.YELLOW
-            + "[CURSOR] "
-            + Fore.LIGHTGREEN_EX
-            + "Painted {} #{}. {}% done.".format((x, y), colour, pct)
-        )
+        print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTGREEN_EX + "Painted {} #{}. {}% done.".format((x, y), colour, pct))
     print(Fore.YELLOW + "[CURSOR] ", Fore.LIGHTGREEN_EX + "Done!")
 
 
