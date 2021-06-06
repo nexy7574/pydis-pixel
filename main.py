@@ -115,6 +115,10 @@ def paint():
 
 
 if args.loop is not None:
+    if isinstance(args.loop, bool):
+        print("Running \N{infinity} times.")
+        while True:
+            paint
     if isinstance(args.loop, int):
         print("Running", args.loop, "times.")
         for i in range(args.loop):
@@ -123,10 +127,6 @@ if args.loop is not None:
             except Exception:
                 print(f"Exception in iteration {i}:", file=sys.stderr)
                 raise
-    else:
-        print("Running \N{infinity} times.")
-        while True:
-            paint()
 else:
     print("Running once.")
     paint()
