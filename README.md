@@ -4,7 +4,7 @@ This is the script I'm using to join in on the [python discord pixels event](htt
 ## Setup
 Oh look, a very convenient shell script!
 ```shell
-curl https://raw.githubusercontent.com/EEKIM10/pydis-pixel/master/install.sh | sh
+curl https://raw.githubusercontent.com/EEKIM10/pydis-pixel/master/install.sh | bash
 ```
 
 **BEFORE YOU RUN!**
