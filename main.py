@@ -8,7 +8,7 @@ from typing import Dict, Tuple, List
 import requests
 from PIL import Image
 
-from api import getPixels, resizeOption, set_pixel, handle_sane_ratelimit
+from api import getPixels, set_pixel, handle_sane_ratelimit
 from kool import Fore
 
 if not os.path.exists("./auth.txt"):
@@ -38,10 +38,8 @@ image_height = (end_y - start_y) - 1
 image_path = input("Image path (provide URL for download): ")
 if image_path.startswith("http"):
     image_response = requests.get(image_path)
-    assert image_response.headers["Content-Type"] == "image/png", "Incorrect image type."
-    with open("image_download.png", "wb+") as download:
-        download.write(image_response.content)
-        image_bytes = image_response.content
+    assert image_response.headers["Content-Type"].startswith("image/"), "Incorrect image type."
+
 else:
     with open(image_path, "rb") as file:
         image_bytes = file.read()
@@ -49,7 +47,6 @@ else:
 pilImage: Image = Image.open(BytesIO(image_bytes))
 pilImage: Image = pilImage.convert("RGB")
 pilImage: Image = pilImage.resize((image_width, image_height))
-pilImage: Image = resizeOption(pilImage, canvas_width, canvas_height)
 
 pixels_array = getPixels(pilImage)
 pixels_map: Dict[Tuple[int, int], str] = {}

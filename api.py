@@ -15,21 +15,6 @@ def getPixels(img):
     return pixels
 
 
-def resizeOption(img, canvas_width, canvas_height):
-    count = len(getPixels(img))
-    hours = round(count / 60, 2)
-    if input(
-        "It will take about {} hours ({} minutes) to complete this drawing. Do you want to resize the image? ".format(
-            hours, count
-        )
-    ).startswith(("y", "Y")):
-        new_width, new_height = input("[WIDTH:HEIGHT] ").split(":")
-        new_width = min(int(new_width), canvas_width)
-        new_height = min(int(new_height), canvas_height)
-        img = img.resize((new_width, new_height))
-    return img
-
-
 def set_pixel(*at: int, colour: str, token: str, base: str = "https://pixels.pythondiscord.com"):
     if "dev" in sys.argv:
         print(f"{Fore.RED}[DEBUG] {Fore.LIGHTBLACK_EX}Args for setting pixel: at={at} colour={colour} token={{no}}")
