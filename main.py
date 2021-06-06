@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import datetime
-import sys
 import os
+import sys
+from io import BytesIO
 from typing import Dict, Tuple, List
+
 import requests
 from PIL import Image
-from io import BytesIO
+
 from api import getPixels, resizeOption, set_pixel, handle_sane_ratelimit
 from kool import Fore
 
