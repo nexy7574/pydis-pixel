@@ -118,7 +118,7 @@ if args.loop is not None:
     if isinstance(args.loop, bool):
         print("Running \N{infinity} times.")
         while True:
-            paint
+            paint()
     if isinstance(args.loop, int):
         print("Running", args.loop, "times.")
         for i in range(args.loop):
