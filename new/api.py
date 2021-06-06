@@ -28,14 +28,14 @@ def resizeOption(img, canvas_width, canvas_height):
     return img
 
 
-def set_pixel(*at: int, colour: str, token: str):
+def set_pixel(*at: int, colour: str, token: str, base: str = "https://pixels.pythondiscord.com"):
     if "dev" in sys.argv:
         print(
             f"{Fore.RED}[DEBUG] {Fore.LIGHTBLACK_EX}Args for setting pixel: at={at} colour={colour} token={{no}}"
         )
     try:
         response = requests.post(
-            "https://pixels.pythondiscord.com/set_pixel",
+            base+"/set_pixel",
             json={"x": at[0], "y": at[1], "rgb": colour},
             headers={"Authorization": "Bearer " + token},
         )
@@ -53,10 +53,16 @@ def set_pixel(*at: int, colour: str, token: str):
         set_pixel(*at, colour=colour, token=token)
         return
     if response.status_code != 200:
-        print(
-            f"{Fore.RED}[ERROR] {Fore.LIGHTWHITE_EX}Non-200 pixel set code. "
-            f"Data:\n{json.dumps(response.json(), indent=2)}"
-        )
+        if response.headers.get("content-type", "null") == "application/json":
+            print(
+                f"{Fore.RED}[ERROR] {Fore.LIGHTWHITE_EX}Non-200 pixel set code. "
+                f"Data:\n{json.dumps(response.json(), indent=2)}"
+            )
+        else:
+            print(
+                f"{Fore.RED}[ERROR] {Fore.LIGHTWHITE_EX}Non-200 pixel set code. "
+                f"Data:\n{response.text}"
+            )
 
 
 def handle_sane_ratelimit(res):

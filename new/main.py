@@ -13,7 +13,7 @@ with open("../auth.txt") as auth:
 base = "https://pixels.pythondiscord.com"
 print(Fore.LIGHTBLUE_EX + "[RATELIMIT] " + Fore.LIGHTGREEN_EX + "Syncing ratelimit...")
 handle_sane_ratelimit(
-    requests.head(base + "/get_pixels", headers={"Authorization": "Bearer " + token})
+    requests.head(base + "/set_pixel", headers={"Authorization": "Bearer " + token})
 )
 canvas_size_response = requests.get(base + "/get_size").json()
 canvas_width = int(canvas_size_response["width"])
@@ -42,12 +42,11 @@ else:
     with open(image_path, "rb") as file:
         image_bytes = file.read()
 
-pilImage = Image.open(BytesIO(image_bytes))
-pilImage = pilImage.convert("RGB")
-pilImage = pilImage.resize((image_width, image_width))
+pilImage: Image = Image.open(BytesIO(image_bytes))
+pilImage: Image = pilImage.convert("RGB")
+pilImage: Image = pilImage.resize((image_width, image_height))
+pilImage: Image = resizeOption(pilImage, canvas_width, canvas_height)
 
-
-pilImage = resizeOption(pilImage, canvas_width, canvas_height)
 pixels_array = getPixels(pilImage)
 pixels_map: Dict[Tuple[int, int], str] = {}
 for e in pixels_array:
@@ -65,7 +64,7 @@ for e in pixels_array:
     _hex += hex(b).replace("0x", "").zfill(2)
     pixels_map[(e[0], e[1])] = _hex
     if "dev" in sys.argv:
-        print(Fore.RED + "[DEBUG] " + Fore.LIGHTBLACK_EX + "hex:", _hex)
+        print(Fore.RED + "[DEBUG] X: {} Y: {} HEX: {}".format(e[0], e[1], _hex))
 
 
 def paint():
@@ -80,39 +79,34 @@ def paint():
             datetime.datetime.now() + datetime.timedelta(seconds=len(pixels_array))
         ).strftime("%X"),
     )
-    for y in range(pilImage.height):
-        canvas_cursor[1] += 1
-        image_cursor[1] += 1
-        for x in range(pilImage.width):
-            canvas_cursor[0] += 1
-            image_cursor[0] += 1
-            # noinspection PyTypeChecker
-            try:
-                colour = pixels_map[tuple(image_cursor)]
-            except KeyError:
-                if "dev" in sys.argv:
-                    print(
-                        Fore.RED
-                        + "[DEBUG] {} is not in colour map? Going to continue.".format(
-                            str(image_cursor)
-                        )
+    for x, y in pixels_map.keys():
+        # noinspection PyTypeChecker
+        try:
+            colour = pixels_map[(x, y)]
+        except KeyError:
+            if "dev" in sys.argv:
+                print(
+                    Fore.RED
+                    + "[DEBUG] {} is not in colour map? Going to continue.".format(
+                        str(image_cursor)
                     )
-                    continue
-            print(
-                Fore.YELLOW
-                + "[CURSOR] "
-                + Fore.LIGHTYELLOW_EX
-                + "Painting {} #{}.".format(str(canvas_cursor), colour)
-            )
-            set_pixel(*canvas_cursor, colour=colour, token=token)
-            painted += 1
-            pct = round((painted / len(pixels_array)) * 100, 2)
-            print(
-                Fore.YELLOW
-                + "[CURSOR] "
-                + Fore.LIGHTGREEN_EX
-                + "Painted {} #{}. {}% done.".format(str(canvas_cursor), colour, pct)
-            )
+                )
+                continue
+        print(
+            Fore.YELLOW
+            + "[CURSOR] "
+            + Fore.LIGHTYELLOW_EX
+            + "Painting {} #{}.".format((x, y), colour)
+        )
+        set_pixel(x+start_x, y+start_y, colour=colour, token=token, base=base)
+        painted += 1
+        pct = round((painted / len(pixels_array)) * 100, 2)
+        print(
+            Fore.YELLOW
+            + "[CURSOR] "
+            + Fore.LIGHTGREEN_EX
+            + "Painted {} #{}. {}% done.".format((x, y), colour, pct)
+        )
     print(Fore.YELLOW + "[CURSOR] ", Fore.LIGHTGREEN_EX + "Done!")
 
 
