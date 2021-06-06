@@ -1,139 +1,131 @@
+#!/usr/bin/env python3
+import datetime
 import sys
-import time
-from io import BytesIO
-from typing import List, Tuple
-from datetime import datetime
-
+import os
+from typing import Dict, Tuple, List
 import requests
 from PIL import Image
+from io import BytesIO
+from api import getPixels, resizeOption, set_pixel, handle_sane_ratelimit
+from kool import Fore
 
-import loader
-
-log = open("./log.txt", "a+")
-log.write(f"[{datetime.utcnow().strftime('%x')} | INFO] Logger created.\n")
-
-try:
-    with open("./auth.txt") as file:
-        token = file.read().strip()
-except FileNotFoundError:
-    print("You don't appear to have any auth tokens. Please create a file called auth.txt and put your token in there.")
+if not os.path.exists("./auth.txt"):
+    print(Fore.RED + "You have not provided an authentication token. Please read the README.")
     sys.exit(4)
 
-headers = {"User-Agent": "Notice me senpai uwu (https://yourapps.cyou)", "Authorization": "Bearer " + token}
+with open("./auth.txt") as auth:
+    token = auth.read().strip()
 
 base = "https://pixels.pythondiscord.com"
+print(Fore.LIGHTBLUE_EX + "[RATELIMIT] " + Fore.LIGHTGREEN_EX + "Syncing ratelimit...")
+handle_sane_ratelimit(
+    requests.head(base + "/set_pixel", headers={"Authorization": "Bearer " + token})
+)
+canvas_size_response = requests.get(base + "/get_size").json()
+canvas_width = int(canvas_size_response["width"])
+canvas_height = int(canvas_size_response["height"])
 
+print(f"{Fore.MAGENTA}[CANVAS] {Fore.WHITE}(W:H) {canvas_width}:{canvas_height}")
 
-class Pixel:
-    def __init__(self, x: int, y: int, rgb, cw, ch) -> None:
-        self.x = x
-        self.y = y
-        self.rgb = int(rgb, base=16)
-        self.hex = hex(self.rgb)
-        self.cw = cw
-        self.ch = ch
+start_x, start_y = map(int, input("Cursor will start at: ").split(","))
+end_x, end_y = map(int, input("Cursor will end at: ").split(","))
 
-    def __repr__(self):
-        return f"Pixel(x={self.x} y={self.y} hex={self.hex.replace('0x', '#')})"
+assert end_x > start_x, "end x is smaller than start x."
+assert end_y >= start_y, "end y is smaller than start y"
+image_width = (end_x - start_x) - 1
+image_height = (end_y - start_y) - 1
 
-    @property
-    def json(self):
-        return {"x": (self.cw // 4) + self.x, "y": (self.ch // 2) + self.y, "rgb": self.hex[2:]}
+image_path = input("Image path (provide URL for download): ")
+if image_path.startswith("http"):
+    image_response = requests.get(image_path)
+    assert (
+        image_response.headers["Content-Type"] == "image/png"
+    ), "Incorrect image type."
+    with open("image_download.png", "wb+") as download:
+        download.write(image_response.content)
+        image_bytes = image_response.content
+else:
+    with open(image_path, "rb") as file:
+        image_bytes = file.read()
 
+pilImage: Image = Image.open(BytesIO(image_bytes))
+pilImage: Image = pilImage.convert("RGB")
+pilImage: Image = pilImage.resize((image_width, image_height))
+pilImage: Image = resizeOption(pilImage, canvas_width, canvas_height)
 
-def handle_sane_ratelimit(res):
-    log.write(str(res.status_code) + " " + str(res.headers) + "\n")
-    if res.status_code == 429:
-        log.write(
-            f"[{datetime.utcnow().strftime('%x')} | WARN] Ratelimited for {res.headers['cooldown-reset']} seconds.\n"
+pixels_array = getPixels(pilImage)
+pixels_map: Dict[Tuple[int, int], str] = {}
+for e in pixels_array:
+    r, g, b, *_ = e[2]
+    if "dev" in sys.argv:
+        print(
+            Fore.RED
+            + "[DEBUG] "
+            + Fore.LIGHTBLACK_EX
+            + "R: {} G: {} B: {} _: {}".format(r, g, b, _)
         )
-        print("On hard cooldown for", res.headers["cooldown-reset"], "seconds.", file=sys.stderr)
-        time.sleep(float(res.headers["cooldown-reset"]))
-    else:
-        if int(res.headers["requests-remaining"]) == 0 or int(res.headers["requests-limit"]) == 0:
-            log.write(
-                f"[{datetime.utcnow().strftime('%x')} | WARN] Soft ratelimited for {res.headers['requests-reset']} secs.\n"
-            )
-            time.sleep(float(res.headers["requests-reset"]))
+    _hex = ""
+    _hex += hex(r).replace("0x", "").zfill(2)
+    _hex += hex(g).replace("0x", "").zfill(2)
+    _hex += hex(b).replace("0x", "").zfill(2)
+    pixels_map[(e[0], e[1])] = _hex
+    if "dev" in sys.argv:
+        print(Fore.RED + "[DEBUG] X: {} Y: {} HEX: {}".format(e[0], e[1], _hex))
 
 
-def getPixels(image: Image) -> List[Pixel]:
-    canvas_width, canvas_height = get_canvas_size()
-    results = []
-    if image.mode != "RGB":
-        image = image.convert("RGB")
-    for x in range(image.width):
-        for y in range(image.height):
-            r, g, b = image.getpixel((x, y))
-            _hex = hex(r) + hex(g) + hex(b)
-            _hex = _hex.replace("0x", "")
-            results.append(Pixel(x, y, _hex, canvas_width, canvas_height))
-    return results
+def paint():
+    canvas_cursor: List[int] = [start_x - 1, start_y - 1]
+    image_cursor: List[int] = [-1, -1]
+    painted = 0
 
-
-def get_pixel(x: int, y: int):
-    response = requests.get(base + "/get_pixel", params={"x": x, "y": y}, headers=headers)
-    handle_sane_ratelimit(response)
-    response.raise_for_status()
-    data = response.json()
-    return Pixel(*data.values(), *get_canvas_size())  # note: THIS WILL RATELIMIT AT SOME POINT
-
-
-def get_canvas_size():
-    response = requests.get(base + "/get_size")
-    data = response.json()
-    return int(data["width"]), int(data["height"])
-
-
-def set_pixel(pixel: Pixel, check: bool = False):
-    if check:
-        p = get_pixel(pixel.x, pixel.y)
-        if p.hex.lower() == pixel.hex.lower():
-            log.write(f"[{datetime.utcnow().strftime('%x')} | INFO] Skipping pixel {repr(pixel)} (already set).")
-    response = requests.post(base + "/set_pixel", json=pixel.json, headers=headers)
-    if response.status_code == 422:
-        return
-    handle_sane_ratelimit(response)
-    if response.status_code == 429:
-        set_pixel(pixel)
-    log.write(f"[{datetime.utcnow().strftime('%x')} | INFO] {response.json()['message']}\n")
-
-
-def main():
-    while True:
-        url = input("URI of image: ")
-        if url.startswith("./"):
-            with open(url, "rb") as _old_image:
-                _image_data = _old_image.read()
-        else:
-            print("GETting URL...")
-            response = requests.get(url)
-            if response.headers["Content-Type"] != "image/png":
-                print("URL Did not return image/png.")
+    print(
+        Fore.YELLOW + "[CURSOR] ",
+        Fore.CYAN + "Beginning paint. It will likely finish at",
+        (
+            datetime.datetime.now() + datetime.timedelta(seconds=len(pixels_array))
+        ).strftime("%X"),
+    )
+    for x, y in pixels_map.keys():
+        # noinspection PyTypeChecker
+        try:
+            colour = pixels_map[(x, y)]
+        except KeyError:
+            if "dev" in sys.argv:
+                print(
+                    Fore.RED
+                    + "[DEBUG] {} is not in colour map? Going to continue.".format(
+                        str(image_cursor)
+                    )
+                )
                 continue
-            _image_data = response.content
-        img = Image.open(BytesIO(_image_data))
-        if input("Would you like to... shrink this image? ").lower().startswith("y"):
-            new_value = input("Width, Height: ")
-            if new_value.split(", "):
-                t = map(int, new_value.split(", "))
-            else:
-                t = (int(new_value), int(new_value))
-            img = img.resize(t, Image.BILINEAR)
-        print("Loaded image successfully, loading pixels...")
-        pixels = getPixels(img)
-        print(f"Loaded {len(pixels)} pixels.")
-        for n, pixel in enumerate(pixels):
-            print(loader.calculateBar(n, len(pixels), disable_safety=True), end="\r")
-            set_pixel(pixel, check=True)
-            time.sleep(60.0)
-        print(loader.calculateBar(len(pixels), len(pixels), disable_safety=True))
-        print("Done!")
+        print(
+            Fore.YELLOW
+            + "[CURSOR] "
+            + Fore.LIGHTYELLOW_EX
+            + "Painting {} #{}.".format((x, y), colour)
+        )
+        set_pixel(x+start_x, y+start_y, colour=colour, token=token, base=base)
+        painted += 1
+        pct = round((painted / len(pixels_array)) * 100, 2)
+        print(
+            Fore.YELLOW
+            + "[CURSOR] "
+            + Fore.LIGHTGREEN_EX
+            + "Painted {} #{}. {}% done.".format((x, y), colour, pct)
+        )
+    print(Fore.YELLOW + "[CURSOR] ", Fore.LIGHTGREEN_EX + "Done!")
 
 
-try:
-    main()
-except KeyboardInterrupt:
-    print("\nOkay, bye!")
-finally:
-    log.close()
+if "loop" in sys.argv:
+    if len(sys.argv) >= 3 and sys.argv[2].isdigit():
+        count = int(sys.argv[2])
+        print("looping {} times".format(count))
+        for i in range(count):
+            paint()
+    else:
+        print("looping \N{infinity} times")
+        while True:
+            paint()
+else:
+    print("Running one-shot")
+    paint()
