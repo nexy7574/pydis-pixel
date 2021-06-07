@@ -8,9 +8,8 @@ from typing import Dict, Tuple
 import requests
 from PIL import Image
 
-from api import get_pixels, set_pixel, handle_sane_ratelimit
-from kool import Fore
-from cli import arguments as args
+from lib.api import get_pixels, set_pixel, handle_sane_ratelimit
+from lib import Fore, arguments as args
 
 if not args.auth:
     if not os.path.exists("./auth.txt"):
@@ -94,22 +93,23 @@ def paint():
         (datetime.datetime.now() + datetime.timedelta(seconds=len(pixels_array))).strftime("%X"),
     )
     for x, y in pixels_map.keys():
+        cursor = (x + start_x, y+start_y)
         # noinspection PyTypeChecker
         try:
             colour = pixels_map[(x, y)]
         except KeyError:
             if args.verbose:
-                print(Fore.RED + "[DEBUG] {} is not in colour map? Going to continue.".format((x, y)))
+                print(Fore.RED + "[DEBUG] {} is not in colour map? Going to continue.".format(cursor))
                 continue
             else:
                 raise
         if not args.quiet:
-            print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTYELLOW_EX + "Painting {} #{}.".format((x, y), colour))
-        set_pixel(x + start_x, y + start_y, colour=colour, token=token, base=base)
+            print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTYELLOW_EX + "Painting {} #{}.".format(cursor, colour))
+        set_pixel(*cursor, colour=colour, token=token, base=base)
         painted += 1
         pct = round((painted / len(pixels_array)) * 100, 2)
         if not args.quiet:
-            print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTGREEN_EX + "Painted {} #{}. {}% done.".format((x, y),
+            print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTGREEN_EX + "Painted {} #{}. {}% done.".format(cursor,
                                                                                                       colour, pct))
     print(Fore.YELLOW + "[CURSOR] ", Fore.LIGHTGREEN_EX + "Done!")
 

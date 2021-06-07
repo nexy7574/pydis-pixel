@@ -5,7 +5,62 @@ from typing import List, Tuple
 
 import requests
 
-from kool import Fore
+from .kool import Fore
+
+
+class Pixel(list):
+    """
+    Describes a pixel
+
+    Attributes:
+        x: int - the X (horizontal) co-ordinate
+        y: int - the Y (vertical) co-ordinate
+        rgb: str - the hexadecimal value
+        hex: str - the hexadecimal value
+    """
+    def __init__(self, x: int, y: int, rgb: str):
+        self.x = x
+        self.y = y
+        self.rgb = rgb
+        self.hex = rgb
+        super().__init__((x, y, rgb))
+
+
+class Api:
+    """
+    OOP API Container
+    """
+    def __init__(self, base: str = "https://pixels.pythondiscord.com"):
+        self.session = requests.session()
+        self.base = base
+
+    def __del__(self):
+        self.session.close()
+
+    def _request(self, uri: str, method: str = "GET", **kwargs):
+        response = self.session.request(method, uri, **kwargs)
+        if response.status_code in range(500, 600):  # server error:
+            raise RuntimeError(f"Pixels server appears to be down ({response.status_code}).")
+        handle_sane_ratelimit(response)
+
+    def get_pixel(self, x: int, y: int) -> Pixel:
+        """
+        Fetches a pixel from the remote canvas.
+
+        :param x: The X (horizontal) co-ordinate of the target pixel
+        :param y: X but Y
+        :return: Pixel - The Found pixel.
+        :raises: ValueError - the co-ordinates were out of range
+        """
+        response = self.session.get(self.base+"/get_pixel", params={"x": x, "y": y})
+        if response.status_code == 422:
+            # The only cause for this is an axis is out of range.
+            raise ValueError("One or more axis were out of range.")
+        handle_sane_ratelimit(response)
+        if response.status_code not in [200, 429]:  # 429 is handled by the above.
+            response.raise_for_status()
+        _json = response.json()
+        return Pixel(*_json.values())
 
 
 def get_pixels(img) -> List[Tuple[int, int, Tuple[int, int, int]]]:
