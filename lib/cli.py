@@ -108,6 +108,16 @@ parser.add_argument(
     help="When active, this will save a cropped version of the image that would be painted.",
     dest="preview_paint",
 )
+parser.add_argument(
+    "--ignore-concurrency",
+    "--ignore-lock",
+    "--force",
+    "-F",
+    action="store_true",
+    default=False,
+    help="If not enabled, this will force the program to lock it's PID.",
+    dest="force"
+)
 
 arguments = parser.parse_args()
 
