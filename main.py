@@ -109,10 +109,10 @@ def paint():
                 raise
         if not args.quiet:
             print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTYELLOW_EX + "Painting {} #{}.".format(cursor, colour))
-        set_pixel(*cursor, colour=colour, token=token, base=base)
+        status = set_pixel(*cursor, colour=colour, token=token, base=base)
         painted += 1
         pct = round((painted / len(pixels_array)) * 100, 2)
-        if not args.quiet:
+        if status == 200 and not args.quiet:
             print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTGREEN_EX + "Painted {} #{}. {}% done.".format(cursor,
                                                                                                       colour, pct))
     print(Fore.YELLOW + "[CURSOR] ", Fore.LIGHTGREEN_EX + "Done!")

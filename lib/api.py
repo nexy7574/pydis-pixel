@@ -98,7 +98,7 @@ def set_pixel(*at: int, colour: str, token: str, base: str = "https://pixels.pyt
         handle_sane_ratelimit(preflight_response)
         if preflight_response.json()["rgb"] == colour:
             print(f"{Fore.CYAN}[API] {at} was already set. ignoring.")
-            return
+            return 300
         response = requests.post(
             base + "/set_pixel",
             json={"x": at[0], "y": at[1], "rgb": colour},
@@ -112,16 +112,18 @@ def set_pixel(*at: int, colour: str, token: str, base: str = "https://pixels.pyt
     if response.status_code == 429:
         # try again
         print(f"{Fore.CYAN}[API] {Fore.LIGHTRED_EX}set_pixel call previously failed due to ratelimit. Retrying {at}.")
-        set_pixel(*at, colour=colour, token=token)
-        return
+        return set_pixel(*at, colour=colour, token=token)
     if response.status_code != 200:
         if response.headers.get("content-type", "null") == "application/json":
             print(
                 f"{Fore.RED}[ERROR] {Fore.LIGHTWHITE_EX}Non-200 pixel set code. "
                 f"Data:\n{json.dumps(response.json(), indent=2)}"
             )
+            return -1
         else:
             print(f"{Fore.RED}[ERROR] {Fore.LIGHTWHITE_EX}Non-200 pixel set code. Data:\n{response.text}")
+            return -1
+    return 200
 
 
 def handle_sane_ratelimit(res):
