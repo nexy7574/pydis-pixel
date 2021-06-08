@@ -18,6 +18,7 @@ class Pixel(list):
         rgb: str - the hexadecimal value
         hex: str - the hexadecimal value
     """
+
     def __init__(self, x: int, y: int, rgb: str):
         self.x = x
         self.y = y
@@ -30,6 +31,7 @@ class Api:
     """
     OOP API Container
     """
+
     def __init__(self, base: str = "https://pixels.pythondiscord.com"):
         self.session = requests.session()
         self.base = base
@@ -52,7 +54,7 @@ class Api:
         :return: Pixel - The Found pixel.
         :raises: ValueError - the co-ordinates were out of range
         """
-        response = self.session.get(self.base+"/get_pixel", params={"x": x, "y": y})
+        response = self.session.get(self.base + "/get_pixel", params={"x": x, "y": y})
         if response.status_code == 422:
             # The only cause for this is an axis is out of range.
             raise ValueError("One or more axis were out of range.")
@@ -90,6 +92,13 @@ def set_pixel(*at: int, colour: str, token: str, base: str = "https://pixels.pyt
     if "dev" in sys.argv:
         print(f"{Fore.RED}[DEBUG] {Fore.LIGHTBLACK_EX}Args for setting pixel: at={at} colour={colour} token={{no}}")
     try:
+        preflight_response = requests.get(
+            base + "/get_pixel", params={"x": at[0], "y": at[1]}, headers={"Authorization": "Bearer " + token}
+        )
+        handle_sane_ratelimit(preflight_response)
+        if preflight_response.json()["rgb"] == colour:
+            print(f"{Fore.CYAN}[API] {at} was already set. ignoring.")
+            return
         response = requests.post(
             base + "/set_pixel",
             json={"x": at[0], "y": at[1], "rgb": colour},
@@ -147,8 +156,9 @@ def handle_sane_ratelimit(res):
                 headers_joined = "\n".join(f"{k}: {v}" for k, v in res.headers.items())
                 print(
                     f"{Fore.RED}[DEBUG][RATELIMITER] {Fore.LIGHTBLACK_EX} A lack of ratelimit headers were sent:\n"
-                    + headers_joined + "\nGoing to ignore ratelimit handling for this request, and pray we haven't"
-                                       " stumbled upon a hard limit."
+                    + headers_joined
+                    + "\nGoing to ignore ratelimit handling for this request, and pray we haven't"
+                    " stumbled upon a hard limit."
                 )
                 return
             print(
