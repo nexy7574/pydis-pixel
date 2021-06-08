@@ -105,6 +105,13 @@ parser.add_argument(
     default="https://pixels.pythondiscord.com",
     help="The base API url."
 )
+parser.add_argument(
+    "--preview-paint",
+    action="store_true",
+    default=False,
+    help="When active, this will save a cropped version of the image that would be painted.",
+    dest="preview_paint"
+)
 
 arguments = parser.parse_args()
 
