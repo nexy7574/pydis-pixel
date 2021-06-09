@@ -73,8 +73,8 @@ def get_pixels(img) -> List[Tuple[int, int, Tuple[int, int, int]]]:
     :return: List[Tuple[int, int, Tuple[int, int, int]]]
     """
     pixels = []
-    for x in range(img.width):
-        for y in range(img.height):
+    for y in range(img.height):
+        for x in range(img.width):
             pixels.append((x, y, img.getpixel((x, y))))
     return pixels
 
