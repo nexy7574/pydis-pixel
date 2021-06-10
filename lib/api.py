@@ -2,8 +2,10 @@ import json
 import sys
 import time
 from typing import List, Tuple
+from datetime import datetime, timedelta
 
 import requests
+from requests.structures import CaseInsensitiveDict
 
 from .kool import Fore
 
@@ -43,7 +45,8 @@ class Api:
         response = self.session.request(method, uri, **kwargs)
         if response.status_code in range(500, 600):  # server error:
             raise RuntimeError(f"Pixels server appears to be down ({response.status_code}).")
-        handle_sane_ratelimit(response)
+        self.wait_out_ratelimit(response.headers)
+        return response.status_code, response.json()
 
     def get_pixel(self, x: int, y: int) -> Pixel:
         """
@@ -58,11 +61,59 @@ class Api:
         if response.status_code == 422:
             # The only cause for this is an axis is out of range.
             raise ValueError("One or more axis were out of range.")
-        handle_sane_ratelimit(response)
+        self.wait_out_ratelimit(response.headers)
         if response.status_code not in [200, 429]:  # 429 is handled by the above.
             response.raise_for_status()
         _json = response.json()
         return Pixel(*_json.values())
+
+    def set_pixel(self, x: int, y: int, colour: str):
+        """
+        Sets a pixel on the canvas
+
+        :param x: The X (horizontal) co-ordinate of the target pixel
+        :param y: You can figure this one out
+        :param colour: The hexadecimal colour
+        :return:
+        """
+        response = self._request(
+            "/set_pixel",
+            "POST",
+            json={"x": x, "y": y, "rgb": colour}
+        )
+
+    @staticmethod
+    def wait_out_ratelimit(headers: CaseInsensitiveDict):
+        remaining = int(headers.get("requests-remaining", 0))
+        soft_cooldown = float(headers.get("requests-reset", 300.0))
+        hard_cooldown = float(headers.get("cooldown-reset", 0.0))
+        if not hard_cooldown:
+            if remaining == 0:  # Soft cooldown
+                expire = datetime.now() + timedelta(seconds=soft_cooldown)
+                print(
+                    f"{Fore.CYAN}[RATELIMITER] {Fore.LIGHTYELLOW_EX}On {Fore.LIGHTGREEN_EX}soft cooldown"
+                    f"{Fore.LIGHTYELLOW_EX} for {Fore.LIGHTCYAN_EX}{soft_cooldown} seconds{Fore.LIGHTYELLOW_EX} "
+                    f"(until {Fore.LIGHTCYAN_EX}{expire.strftime('%X')}{Fore.LIGHTYELLOW_EX})."
+                )
+        else:
+            if hard_cooldown == float("inf"):
+                raise ValueError("Hard cooldown is way too long (to be precise, it's infinite)")
+            expire = datetime.now() + timedelta(seconds=hard_cooldown)
+            print(
+                f"{Fore.CYAN}[RATELIMITER] {Fore.LIGHTYELLOW_EX}On {Fore.RED}hard cooldown"
+                f"{Fore.LIGHTYELLOW_EX} for {Fore.LIGHTCYAN_EX}{hard_cooldown} seconds{Fore.LIGHTYELLOW_EX} "
+                f"(until {Fore.LIGHTCYAN_EX}{expire.strftime('%X')}{Fore.LIGHTYELLOW_EX})."
+            )
+            time.sleep(hard_cooldown)
+
+    def sync_ratelimit(self, endpoint: str = "set_pixel"):
+        """
+        Simply sends a HEAD request and waits for the timeout.
+
+        :return:
+        """
+        response = self._request("/"+endpoint.lower(), "HEAD")
+        return handle_sane_ratelimit(response)
 
 
 def get_pixels(img) -> List[Tuple[int, int, Tuple[int, int, int]]]:

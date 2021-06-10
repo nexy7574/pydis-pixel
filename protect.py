@@ -14,6 +14,10 @@
 # Only use this if you're aware of the risks
 
 # We're going to build off the main script.
-from kool import Fore
+from queue import SimpleQueue
+from lib import Fore, render
 
 
+
+def protect():
+    pass

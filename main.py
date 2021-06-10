@@ -2,14 +2,12 @@
 import datetime
 import os
 import sys
-from io import BytesIO
-from typing import Dict, Tuple
+import traceback
 
 import requests
-from PIL import Image
 
 from lib.api import get_pixels, set_pixel, handle_sane_ratelimit
-from lib import Fore, arguments as args
+from lib import Fore, arguments as args, render
 
 if not args.auth:
     if not os.path.exists("./auth.txt"):
@@ -22,8 +20,6 @@ else:
     token = args.auth
 
 base = args.base
-print(Fore.LIGHTBLUE_EX + "[RATELIMIT] " + Fore.LIGHTGREEN_EX + "Syncing ratelimit...")
-handle_sane_ratelimit(requests.head(base + "/set_pixel", headers={"Authorization": "Bearer " + token}))
 # Handling the ratelimit here will sync our cooldown to zero.
 
 canvas_size_response = requests.get(base + "/get_size").json()
@@ -48,39 +44,7 @@ assert end_y >= start_y, "end y is smaller than start y"
 image_width = (end_x - start_x) - 1  # zero-indexing.
 image_height = (end_y - start_y) - 1
 
-if args.image is None:
-    image_path = input("Image path (provide URL for download): ")
-else:
-    image_path = str(args.image)  # convert to string for the below startswith
-if image_path.startswith("http"):  # this is an image to download. send a web request.
-    image_response = requests.get(image_path)
-    assert image_response.headers["Content-Type"].startswith("image/"), "Incorrect image type."
-    image_bytes: bytes = image_response.content
-else:
-    with open(image_path, "rb") as file:
-        image_bytes: bytes = file.read()
-
-pilImage: Image = Image.open(BytesIO(image_bytes))  # open the image into an Image object
-pilImage: Image = pilImage.convert("RGB")  # convert it to RGB (none of that RGBA crap)
-pilImage: Image = pilImage.resize((image_width, image_height))  # Resize it to the cursor border
-if args.preview_paint:
-    pilImage.save("./preview.png")
-    print("Preview saved. See: preview.png")
-    sys.exit(0)
-
-pixels_array = get_pixels(pilImage)  # Gets the raw pixel data for the mapping
-pixels_map: Dict[Tuple[int, int], str] = {}  # a mapping of (x, y): hex
-for e in pixels_array:
-    r, g, b, *_ = e[2]
-    if args.verbose:
-        print(Fore.RED + "[DEBUG] " + Fore.LIGHTBLACK_EX + "R: {} G: {} B: {} _: {}".format(r, g, b, _))
-    _hex = ""
-    _hex += hex(r).replace("0x", "").zfill(2)
-    _hex += hex(g).replace("0x", "").zfill(2)
-    _hex += hex(b).replace("0x", "").zfill(2)
-    pixels_map[(e[0], e[1])] = _hex
-    if args.verbose:
-        print(Fore.RED + "[DEBUG] X: {} Y: {} HEX: {}".format(e[0], e[1], _hex))
+pilImage, pixels_map, pixels_array = render(image_width, image_height)
 
 
 def paint():
@@ -122,7 +86,11 @@ if args.loop is not None:
     if isinstance(args.loop, bool):
         print("Running \N{infinity} times.")
         while True:
-            paint()
+            try:
+                paint()
+            except Exception:
+                print("Exception in iteration ...:", file=sys.stderr)
+                traceback.print_exc()
     if isinstance(args.loop, int):
         print("Running", args.loop, "times.")
         for i in range(args.loop):
@@ -130,7 +98,7 @@ if args.loop is not None:
                 paint()
             except Exception:
                 print(f"Exception in iteration {i}:", file=sys.stderr)
-                raise
+                traceback.print_exc()
 else:
     print("Running once.")
     paint()
