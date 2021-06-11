@@ -23,7 +23,7 @@ def render(image_width: int, image_height: int):
 
     pilImage: Image = Image.open(BytesIO(image_bytes))  # open the image into an Image object
     pilImage: Image = pilImage.convert("RGB")  # convert it to RGB (none of that RGBA crap)
-    pilImage: Image = pilImage.resize((image_width, image_height))  # Resize it to the cursor border
+    pilImage: Image = pilImage.resize((image_width, image_height), Image.NEAREST)  # Resize it to the cursor border
     if args.preview_paint:
         pilImage.save("./preview.png")
         print("Preview saved. See: preview.png")
