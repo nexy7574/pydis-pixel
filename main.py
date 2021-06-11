@@ -61,6 +61,8 @@ def paint():
                 for _y in range(image.height):
                     if _x == local_cursor[0]:
                         image.putpixel((_x, _y), (255, 0, 0))
+                    if _y == local_cursor[1]:
+                        image.putpixel((_x, _y), (0, 0, 255))
             image = image.resize((1920, 1080))
             image.save("./cursor.png")
 
