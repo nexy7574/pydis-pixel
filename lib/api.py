@@ -104,6 +104,7 @@ class Api:
 
         :return: width, height
         """
+        self.sync_ratelimit("get_size")
         status, data = self._request("/get_size")
         return data["width"], data["height"]
 
@@ -116,6 +117,7 @@ class Api:
         :return: Pixel - The Found pixel.
         :raises: ValueError - the co-ordinates were out of range
         """
+        self.sync_ratelimit("get_pixel")
         status, data = self._request("/get_pixel", "GET", params={"x": x, "y": y})
         return Pixel(*data.values())
 
@@ -129,6 +131,7 @@ class Api:
         :param colour: The hexadecimal colour
         :return:
         """
+        self.sync_ratelimit("set_pixel")
         status, data = self._request(
             "/set_pixel",
             "POST",
@@ -159,6 +162,7 @@ class Api:
         :param resize_to: The width, height pair to resize to. If not provided, will not resize.
         :return: PIL.Image
         """
+        self.sync_ratelimit("get_pixels")
         status, image_data = self._request(
             "/get_pixels",
             return_content="content"
@@ -207,7 +211,7 @@ class Api:
 
         :return:
         """
-        response = self._request("/"+endpoint.lower(), "HEAD")
+        self._request("/"+endpoint.lower(), "HEAD")
 
 
 def get_pixels(img) -> List[Tuple[int, int, Tuple[int, int, int]]]:
