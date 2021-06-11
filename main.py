@@ -68,6 +68,10 @@ def paint():
         if status is True and args.quiet is False:
             print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTGREEN_EX + "Painted {} #{}. {}% done.".format(cursor,
                                                                                                       colour, pct))
+        if status is None and args.quiet is False:
+            print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTCYAN_EX + "{} Already painted. {}% done.".format(
+                cursor, pct
+            ))
     print(Fore.YELLOW + "[CURSOR] ", Fore.LIGHTGREEN_EX + "Done!")
 
 
