@@ -61,7 +61,7 @@ class Api:
             "Bearer " + self.auth
         )
         return_content = kwargs.pop("return_content", "json")
-        response = self.session.request(method, uri, **kwargs)
+        response = self.session.request(method, self.base+uri, **kwargs)
 
         # Error handling
         if response.status_code == 422:
