@@ -65,7 +65,7 @@ def paint():
         status = api.set_pixel(*cursor, colour=colour)
         painted += 1
         pct = round((painted / len(pixels_array)) * 100, 2)
-        if status is True and not args.quiet:
+        if status is True and args.quiet is False:
             print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTGREEN_EX + "Painted {} #{}. {}% done.".format(cursor,
                                                                                                       colour, pct))
     print(Fore.YELLOW + "[CURSOR] ", Fore.LIGHTGREEN_EX + "Done!")
