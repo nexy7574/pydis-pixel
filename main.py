@@ -3,8 +3,11 @@ import datetime
 import os
 import sys
 import traceback
+from copy import copy
+from signal import SIGUSR1, signal, SIGUSR2
 
 import requests
+from PIL.ImageDraw import Draw
 
 from lib import Fore, arguments as args, render, api
 
@@ -43,12 +46,33 @@ def paint():
     This is the main runtime, only in a function to allow for easier looping.
     """
     painted = 0
+    cursor = (0, 0)
+
+    def signal_handler(num, frame):
+        if num == SIGUSR1:
+            pct = round((painted / len(pixels_array)) * 100, 2)
+            print(f"{Fore.MAGENTA}[SIGUSR1]{Fore.WHITE} {painted}/{len(pixels_array)}, {pct}% complete.")
+        elif num == SIGUSR2:
+            nonlocal cursor
+            local_cursor = copy(cursor)
+            image = api.get_pixels()
+            # _draw = Draw(image)
+            # _draw.line((cursor[0], 0, cursor[0], end_y), fill="blue")
+            # _draw.line((0, cursor[1], 0, end_x), fill="orange")
+            for _x in range(image.width):
+                for _y in range(image.height):
+                    if _x == local_cursor[0]:
+                        image.putpixel((_x, _y), (255, 0, 0))
+            image = image.resize((1920, 1080))
+            image.save("./cursor.png")
 
     print(
         Fore.YELLOW + "[CURSOR] ",
         Fore.CYAN + "Beginning paint. It will likely finish at",
         (datetime.datetime.now() + datetime.timedelta(seconds=len(pixels_array))).strftime("%X"),
     )
+    signal(SIGUSR1, signal_handler)
+    signal(SIGUSR2, signal_handler)
     for x, y in pixels_map.keys():
         cursor = (x + start_x, y+start_y)
         # noinspection PyTypeChecker

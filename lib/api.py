@@ -163,9 +163,11 @@ class Api:
             "/get_pixels",
             return_content="content"
         )
+        size = self.get_size()
+
         image = Image.frombytes(
             "RGB",
-            (self.max_width, self.max_width),
+            size,
             image_data
         )
         if resize_to:
