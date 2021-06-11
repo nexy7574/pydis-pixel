@@ -54,15 +54,16 @@ def paint():
             nonlocal cursor
             local_cursor = copy(cursor)
             image = api.get_pixels()
+            image = image.convert("RGBA")
             # _draw = Draw(image)
             # _draw.line((cursor[0], 0, cursor[0], end_y), fill="blue")
             # _draw.line((0, cursor[1], 0, end_x), fill="orange")
             for _x in range(image.width):
                 for _y in range(image.height):
                     if _x == local_cursor[0]:
-                        image.putpixel((_x, _y), (255, 0, 0))
+                        image.putpixel((_x, _y), (255, 0, 0, 0.2))
                     if _y == local_cursor[1]:
-                        image.putpixel((_x, _y), (0, 0, 255))
+                        image.putpixel((_x, _y), (0, 0, 255, 0.2))
             image = image.resize((1920, 1080))
             image.save("./cursor.png")
 
