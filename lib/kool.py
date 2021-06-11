@@ -15,3 +15,14 @@ except ImportError:
     Fore = _Fore()
 
 __all__ = ("Fore",)
+
+
+def _print(*args, verbose: bool = ..., **kwargs):
+    from .cli import arguments
+    if verbose is ...:
+        verbose = any(
+            (x in kwargs.get("sep", " ").join(map(str, args)) for x in ("[VERBOSE]", "[DEV]", "[DEBUG]"))
+        )
+    if verbose and not arguments.verbose:
+        return
+    print(*args, **kwargs)

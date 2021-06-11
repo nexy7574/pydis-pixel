@@ -6,8 +6,7 @@ import traceback
 
 import requests
 
-from lib.api import get_pixels, set_pixel, handle_sane_ratelimit
-from lib import Fore, arguments as args, render
+from lib import Fore, arguments as args, render, api
 
 base = args.base
 # Handling the ratelimit here will sync our cooldown to zero.
@@ -63,10 +62,10 @@ def paint():
                 raise
         if not args.quiet:
             print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTYELLOW_EX + "Painting {} #{}.".format(cursor, colour))
-        status = set_pixel(*cursor, colour=colour, token=args.auth, base=base)
+        status = api.set_pixel(*cursor, colour=colour)
         painted += 1
         pct = round((painted / len(pixels_array)) * 100, 2)
-        if status == 200 and not args.quiet:
+        if status is True and not args.quiet:
             print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTGREEN_EX + "Painted {} #{}. {}% done.".format(cursor,
                                                                                                       colour, pct))
     print(Fore.YELLOW + "[CURSOR] ", Fore.LIGHTGREEN_EX + "Done!")

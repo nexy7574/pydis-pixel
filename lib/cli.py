@@ -32,7 +32,7 @@ parser.add_argument(
     "--dev",
     action="store_true",
     default=False,
-    help="Toggles verbose output on/off. Useful for debugging.",
+    help="Toggles verbose output on/off. Useful for debugging."
 )
 parser.add_argument(
     "--loop",

@@ -8,8 +8,9 @@ import requests
 from requests.structures import CaseInsensitiveDict
 from PIL import Image
 
-from .kool import Fore
+from .kool import Fore, _print as print
 from .errors import APIException, AxisOutOfRange, APIOffline
+from .cli import arguments as args
 
 
 class Pixel(list):
@@ -61,7 +62,11 @@ class Api:
             "Bearer " + self.auth
         )
         return_content = kwargs.pop("return_content", "json")
+        if args.verbose:
+            print(f"{Fore.RED}[DEBUG] {Fore.LIGHTBLACK_EX}{method}-ing {uri}...")
         response = self.session.request(method, self.base+uri, **kwargs)
+        if args.verbose:
+            print(f"{Fore.RED}[DEBUG] {Fore.LIGHTBLACK_EX}sent {method} to {uri}.")
 
         # Error handling
         if response.status_code == 422:
@@ -77,6 +82,8 @@ class Api:
         # However, in terms of protection scripts, this can make or break the program's success.
 
         if response.status_code != 200:
+            if args.verbose:
+                print(f"{Fore.RED}[DEBUG] {Fore.LIGHTBLACK_EX}non-200 {response.status_code} on {uri}. retrying.")
             return self._request(uri, method, **kwargs)
 
         # We need a special case for HEAD requests with no body
