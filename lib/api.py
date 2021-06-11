@@ -188,6 +188,7 @@ class Api:
                     f"{Fore.LIGHTYELLOW_EX} for {Fore.LIGHTCYAN_EX}{soft_cooldown} seconds{Fore.LIGHTYELLOW_EX} "
                     f"(until {Fore.LIGHTCYAN_EX}{expire.strftime('%X')}{Fore.LIGHTYELLOW_EX})."
                 )
+                time.sleep(soft_cooldown)
         else:
             hard_cooldown = float(hard_cooldown)
             expire = datetime.now() + timedelta(seconds=hard_cooldown)
