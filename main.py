@@ -9,16 +9,6 @@ import requests
 from lib.api import get_pixels, set_pixel, handle_sane_ratelimit
 from lib import Fore, arguments as args, render
 
-if not args.auth:
-    if not os.path.exists("./auth.txt"):
-        print(Fore.RED + "You have not provided an authentication token. Please read the README.")
-        sys.exit(4)
-
-    with open("./auth.txt") as auth:
-        token = auth.read().strip()
-else:
-    token = args.auth
-
 base = args.base
 # Handling the ratelimit here will sync our cooldown to zero.
 
@@ -73,7 +63,7 @@ def paint():
                 raise
         if not args.quiet:
             print(Fore.YELLOW + "[CURSOR] " + Fore.LIGHTYELLOW_EX + "Painting {} #{}.".format(cursor, colour))
-        status = set_pixel(*cursor, colour=colour, token=token, base=base)
+        status = set_pixel(*cursor, colour=colour, token=args.auth, base=base)
         painted += 1
         pct = round((painted / len(pixels_array)) * 100, 2)
         if status == 200 and not args.quiet:

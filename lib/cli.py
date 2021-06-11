@@ -1,5 +1,9 @@
+import sys
+import os
+from subprocess import run, DEVNULL, PIPE
 from argparse import ArgumentParser
 from pathlib import Path
+from .kool import Fore
 
 
 def path_like(i: str):
@@ -118,8 +122,38 @@ parser.add_argument(
     help="If not enabled, this will force the program to lock it's PID.",
     dest="force"
 )
+parser.add_argument(
+    "--version",
+    action="store_true",
+    default=False,
+    help="Shows the version and exits."
+)
+parser.add_argument(
+    "--download-canvas",
+    "-D",
+    action="store_true",
+    default=False,
+    help="Downloads the canvas to canvas.png",
+    dest="download"
+)
 
 arguments = parser.parse_args()
 
+if not arguments.auth:
+    if not os.path.exists("./auth.txt"):
+        print(Fore.RED + "You have not provided an authentication token. Please read the README.")
+        sys.exit(4)
+
+    with open("./auth.txt") as auth:
+        token = auth.read().strip()
+    arguments.auth = token
+
 if __name__ == "__main__":
     print(arguments)
+
+if arguments.version:
+    res = run(["git", "rev-parse", "--short", "HEAD"], stderr=DEVNULL, stdout=PIPE)
+    out = res.stdout.decode().strip()
+    assert len(out) <= 8, f"Version '{out!r}' too long."
+    print(f"Pixels Revision '{out}'")
+    sys.exit(0)

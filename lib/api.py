@@ -1,13 +1,15 @@
 import json
 import sys
 import time
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from datetime import datetime, timedelta
 
 import requests
 from requests.structures import CaseInsensitiveDict
+from PIL import Image
 
 from .kool import Fore
+from .errors import APIException, AxisOutOfRange, APIOffline
 
 
 class Pixel(list):
@@ -34,19 +36,68 @@ class Api:
     OOP API Container
     """
 
-    def __init__(self, base: str = "https://pixels.pythondiscord.com"):
+    def __init__(self, base: str = "https://pixels.pythondiscord.com", *, auth: str):
         self.session = requests.session()
         self.base = base
+        self.auth = auth
+
+        self.max_width, self.max_height = self.get_size()
 
     def __del__(self):
         self.session.close()
 
+    def _adjust_height(self, x, y):
+        if self.max_width >= x >= 0 or self.max_height >= y >= 0:  # canvas size has probably changed.
+            # self.max_width, self.max_height = self.get_size()
+            pass
+            # While writing this, I realised if the canvas re-expands there's no way to detect this without
+            # sending yet another request.
+
     def _request(self, uri: str, method: str = "GET", **kwargs):
+        method = method.upper()
+        kwargs.setdefault(
+            "Authorization",
+            "Bearer " + self.auth
+        )
+        return_content = kwargs.pop("return_content", "json")
         response = self.session.request(method, uri, **kwargs)
+
+        # Error handling
+        if response.status_code == 422:
+            raise AxisOutOfRange(response.status_code, response.json()["detail"], message="Malformed request.")
         if response.status_code in range(500, 600):  # server error:
-            raise RuntimeError(f"Pixels server appears to be down ({response.status_code}).")
+            raise APIOffline(response.status_code, f"Pixels server appears to be down.")
+
+        # Lets not 429
         self.wait_out_ratelimit(response.headers)
-        return response.status_code, response.json()
+        # NOTE: This PAUSES the ENTIRE program for ONE endpoint's cooldown.
+        # A better alternative would be checking against datetimes in some container bucket thing.
+        # For now, it's not so much of an issue.
+        # However, in terms of protection scripts, this can make or break the program's success.
+
+        if response.status_code != 200:
+            return self._request(uri, method, **kwargs)
+
+        # We need a special case for HEAD requests with no body
+        if method == "HEAD":
+            return response.status_code, {}
+        if return_content is None:
+            return response.status_code
+        attr = getattr(response, return_content)
+        if callable(attr):
+            data = attr()
+        else:
+            data = attr
+        return response.status_code, data
+
+    def get_size(self) -> Tuple[int, int]:
+        """
+        Fetches the size of the canvas.
+
+        :return: width, height
+        """
+        status, data = self._request("/get_size")
+        return data["width"], data["height"]
 
     def get_pixel(self, x: int, y: int) -> Pixel:
         """
@@ -57,30 +108,61 @@ class Api:
         :return: Pixel - The Found pixel.
         :raises: ValueError - the co-ordinates were out of range
         """
-        response = self.session.get(self.base + "/get_pixel", params={"x": x, "y": y})
-        if response.status_code == 422:
-            # The only cause for this is an axis is out of range.
-            raise ValueError("One or more axis were out of range.")
-        self.wait_out_ratelimit(response.headers)
-        if response.status_code not in [200, 429]:  # 429 is handled by the above.
-            response.raise_for_status()
-        _json = response.json()
-        return Pixel(*_json.values())
+        status, data = self._request("/get_pixel", "GET", params={"x": x, "y": y})
+        return Pixel(*data.values())
 
-    def set_pixel(self, x: int, y: int, colour: str):
+    def blind_set_pixel(self, x: int, y: int, colour: str) -> bool:
         """
-        Sets a pixel on the canvas
+        Sets a pixel on the canvas.
+        Unlike set_pixel, this will set it without checking first.
 
         :param x: The X (horizontal) co-ordinate of the target pixel
         :param y: You can figure this one out
         :param colour: The hexadecimal colour
         :return:
         """
-        response = self._request(
+        status, data = self._request(
             "/set_pixel",
             "POST",
             json={"x": x, "y": y, "rgb": colour}
         )
+        if status != 200:
+            raise APIException(status, "Unknown error.", message=json.dumps(data, indent=2))
+        return True
+
+    def set_pixel(self, x: int, y: int, colour: str) -> Optional[bool]:
+        """
+        Sets a pixel on the canvas.
+
+        :param x: Guess
+        :param y: Guess more
+        :param colour: #hex000
+        :return:
+        """
+        pixel = self.get_pixel(x, y)
+        if pixel.hex == colour:
+            return
+        return self.blind_set_pixel(x, y, colour)
+
+    def get_pixels(self, resize_to: Tuple[int, int] = None) -> Image:
+        """
+        Downloads the entire canvas
+
+        :param resize_to: The width, height pair to resize to. If not provided, will not resize.
+        :return: PIL.Image
+        """
+        status, image_data = self._request(
+            "/get_pixels",
+            return_content="content"
+        )
+        image = Image.frombytes(
+            "RGB",
+            (self.max_width, self.max_width),
+            image_data
+        )
+        if resize_to:
+            image.resize(resize_to, Image.NEAREST)
+        return image
 
     @staticmethod
     def wait_out_ratelimit(headers: CaseInsensitiveDict):
@@ -113,7 +195,6 @@ class Api:
         :return:
         """
         response = self._request("/"+endpoint.lower(), "HEAD")
-        return handle_sane_ratelimit(response)
 
 
 def get_pixels(img) -> List[Tuple[int, int, Tuple[int, int, int]]]:
