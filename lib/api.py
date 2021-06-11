@@ -43,6 +43,13 @@ class Api:
         self.auth = auth
 
         self.max_width, self.max_height = self.get_size()
+        # sync all ratelimits
+        print(Fore.RED+"[DEBUG]"+Fore.LIGHTBLACK_EX+" Syncing ratelimit for get_pixel...")
+        self.sync_ratelimit("/get_pixel")
+        print(Fore.RED + "[DEBUG]" + Fore.LIGHTBLACK_EX + " Syncing ratelimit for get_pixels...")
+        self.sync_ratelimit("/get_pixels")
+        print(Fore.RED + "[DEBUG]" + Fore.LIGHTBLACK_EX + " Syncing ratelimit for set_pixel...")
+        self.sync_ratelimit("/set_pixel")
 
     def __del__(self):
         self.session.close()
@@ -104,7 +111,7 @@ class Api:
 
         :return: width, height
         """
-        self.sync_ratelimit("get_size")
+        # self.sync_ratelimit("get_size")
         status, data = self._request("/get_size")
         return data["width"], data["height"]
 
@@ -211,7 +218,9 @@ class Api:
 
         :return:
         """
+        print(Fore.RED+"[DEBUG]"+Fore.LIGHTBLACK_EX+" Syncing ratelimit for", endpoint, verbose=True)
         self._request("/"+endpoint.lower(), "HEAD")
+        print(Fore.RED + "[DEBUG]" + Fore.LIGHTBLACK_EX + " Synced ratelimit for", endpoint, verbose=True)
 
 
 def get_pixels(img) -> List[Tuple[int, int, Tuple[int, int, int]]]:
