@@ -55,7 +55,8 @@ class Api:
 
     def _request(self, uri: str, method: str = "GET", **kwargs):
         method = method.upper()
-        kwargs.setdefault(
+        kwargs.setdefault("headers", {})
+        kwargs["headers"].setdefault(
             "Authorization",
             "Bearer " + self.auth
         )
