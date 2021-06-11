@@ -168,9 +168,12 @@ class Api:
     @staticmethod
     def wait_out_ratelimit(headers: CaseInsensitiveDict):
         remaining = int(headers.get("requests-remaining", 0))
-        soft_cooldown = float(headers.get("requests-reset", 300.0))
-        hard_cooldown = float(headers.get("cooldown-reset", 0.0))
-        if not hard_cooldown:
+        soft_cooldown = headers.get("requests-reset", ...)
+        hard_cooldown = headers.get("cooldown-reset", ...)
+        if hard_cooldown is ...:
+            if soft_cooldown is ...:
+                return  # no cooldown
+            soft_cooldown = float(soft_cooldown)
             if remaining == 0:  # Soft cooldown
                 expire = datetime.now() + timedelta(seconds=soft_cooldown)
                 print(
@@ -179,8 +182,7 @@ class Api:
                     f"(until {Fore.LIGHTCYAN_EX}{expire.strftime('%X')}{Fore.LIGHTYELLOW_EX})."
                 )
         else:
-            if hard_cooldown == float("inf"):
-                raise ValueError("Hard cooldown is way too long (to be precise, it's infinite)")
+            hard_cooldown = float(hard_cooldown)
             expire = datetime.now() + timedelta(seconds=hard_cooldown)
             print(
                 f"{Fore.CYAN}[RATELIMITER] {Fore.LIGHTYELLOW_EX}On {Fore.RED}hard cooldown"

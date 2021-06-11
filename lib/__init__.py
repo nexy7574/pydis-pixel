@@ -11,7 +11,7 @@ api = Api(
 )
 
 
-if arguments.download_canvas:
+if arguments.download:
     api.get_pixels((1920, 1080)).save("./canvas.png")
     print("Canvas downloaded to ./canvas.png!")
     # Don't exit
