@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 import datetime
-import os
 import sys
 import traceback
 from copy import copy
 from signal import SIGUSR1, signal, SIGUSR2
 
 import requests
-from PIL.ImageDraw import Draw
 
 from lib import Fore, arguments as args, render, api
 

@@ -44,12 +44,9 @@ class Api:
 
         self.max_width, self.max_height = self.get_size()
         # sync all ratelimits
-        print(Fore.RED+"[DEBUG]"+Fore.LIGHTBLACK_EX+" Syncing ratelimit for get_pixel...")
-        self.sync_ratelimit("/get_pixel")
-        print(Fore.RED + "[DEBUG]" + Fore.LIGHTBLACK_EX + " Syncing ratelimit for get_pixels...")
-        self.sync_ratelimit("/get_pixels")
-        print(Fore.RED + "[DEBUG]" + Fore.LIGHTBLACK_EX + " Syncing ratelimit for set_pixel...")
-        self.sync_ratelimit("/set_pixel")
+        self.sync_ratelimit("get_pixel")
+        self.sync_ratelimit("get_pixels")
+        self.sync_ratelimit("set_pixel")
 
     def __del__(self):
         self.session.close()
