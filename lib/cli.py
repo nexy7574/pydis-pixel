@@ -7,12 +7,21 @@ from .kool import Fore
 
 
 def path_like(i: str):
-    if i.startswith("http"):
+    if i.startswith("file://"):
+        i = i[7:]
+    elif i.startswith("http"):
         # I is a URL
         return i
     p = Path(i).resolve()
     assert p.exists(), "Invalid path"
     return p
+
+
+def read_path_like(i: str):
+    v = path_like(i)
+    if isinstance(v, Path):
+        return v.read_text()
+    return v
 
 
 def loop_validator(v: str):

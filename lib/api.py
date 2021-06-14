@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import requests
 from requests.structures import CaseInsensitiveDict
 from PIL import Image
+from aiohttp import ClientSession
 
 from .kool import Fore, _print as print
 from .errors import APIException, AxisOutOfRange, APIOffline
@@ -37,10 +38,11 @@ class Api:
     OOP API Container
     """
 
-    def __init__(self, base: str = "https://pixels.pythondiscord.com", *, auth: str):
+    def __init__(self, base: str = "https://pixels.pythondiscord.com", *, auth: str, session: ClientSession = None):
         self.session = requests.session()
         self.base = base
         self.auth = auth
+        # self.session = session
 
         self.max_width, self.max_height = self.get_size()
         # sync all ratelimits
