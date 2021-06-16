@@ -133,6 +133,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--version",
+    "-v",
     action="store_true",
     default=False,
     help="Shows the version and exits."
