@@ -138,20 +138,20 @@ parser.add_argument(
     help="Shows the version and exits."
 )
 parser.add_argument(
-    "--download-canvas-exit",
-    "-D",
-    action="store_true",
-    default=False,
-    help="Downloads the canvas to canvas.png and exits",
-    dest="download_exit"
-)
-parser.add_argument(
     "--download-canvas",
     "-d",
     action="store_true",
     default=False,
     help="Downloads the canvas to canvas.png",
     dest="download"
+)
+parser.add_argument(
+    "--download-canvas-exit",
+    "-D",
+    action="store_true",
+    default=False,
+    help="Downloads the canvas to canvas.png and exits",
+    dest="download_exit"
 )
 
 arguments = parser.parse_args()
