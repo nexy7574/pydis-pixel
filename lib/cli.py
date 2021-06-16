@@ -140,7 +140,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--download-canvas",
-    "-d",
+    "-D",
     action="store_true",
     default=False,
     help="Downloads the canvas to canvas.png",
@@ -148,10 +148,10 @@ parser.add_argument(
 )
 parser.add_argument(
     "--download-canvas-exit",
-    "-D",
+    "-E",
     action="store_true",
     default=False,
-    help="Downloads the canvas to canvas.png and exits",
+    help="If -D or --download-canvas is also specified, this will exit after downloading",
     dest="download_exit"
 )
 
