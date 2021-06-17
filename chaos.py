@@ -1,9 +1,13 @@
 import os
+import sys
 
 from lib import api
 from random import randint
 
-width, height = api.get_size()
+if len(sys.argv) == 3:
+    width, height = map(int, sys.argv[1:])
+else:
+    width, height = api.get_size()
 colour = os.getenv("COLOUR", "RANDOMISE")
 
 iteration = 0
