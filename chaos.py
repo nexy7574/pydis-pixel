@@ -10,7 +10,7 @@ if arguments.end_x:
     width = arguments.end_x
 if arguments.end_y:
     height = arguments.end_y
-if width is ... or height is ...
+if width is ... or height is ...:
     width, height = api.get_size()
 colour = os.getenv("COLOUR", "RANDOMISE")
 
