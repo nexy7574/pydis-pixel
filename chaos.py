@@ -26,5 +26,7 @@ while True:
     else:
         col = int(colour, 16)
     h = hex(col)[2:]
+    if len(h) < 6:
+        h += "0"*(6-len(h))
     print(f"[CURSOR] Setting ({x}, {y}) to #{h}")
     api.set_pixel(x, y, h)
