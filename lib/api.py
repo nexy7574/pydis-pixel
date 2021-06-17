@@ -76,7 +76,7 @@ class Api:
 
         # Error handling
         if response.status_code == 422:
-            raise AxisOutOfRange(response.status_code, response.json()["detail"], message="Malformed request.")
+            raise AxisOutOfRange(response.status_code, response.text, message="Malformed request.")
         if response.status_code in range(500, 600):  # server error:
             raise APIOffline(response.status_code, f"Pixels server appears to be down.")
 

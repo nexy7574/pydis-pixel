@@ -14,6 +14,7 @@ class APIException(BasePixelsException):
         ret = f"Response from pixels server was not okay: {self.status} - {self.detail}"
         if self.message:
             ret += " | " + self.message
+        return ret
 
 
 class AxisOutOfRange(APIException):
