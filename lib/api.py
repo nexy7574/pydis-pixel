@@ -156,6 +156,8 @@ class Api:
         :param colour: #hex000
         :return:
         """
+        if int(colour) == 0x0:
+            return
         pixel = self.get_pixel(x, y)
         if pixel.hex == colour:
             return
