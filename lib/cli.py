@@ -112,7 +112,7 @@ parser.add_argument(
     help="Your API token from https://pixels.pythondiscord.com/show_token",
 )
 parser.add_argument(
-    "--base", "--api-url", action="store", default="https://pixels.pythondiscord.com", help="The base API url."
+    "--base", "--api-url", action="store", default="https://pixels.dragdev.xyz", help="The base API url."
 )
 parser.add_argument(
     "--preview-paint",
