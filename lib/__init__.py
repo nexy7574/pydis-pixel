@@ -1,8 +1,5 @@
 from sys import version_info
 
-if version_info.minor > 9:
-    raise RuntimeError("Python version is too new! Only 3.6-3.9 are supported.")
-
 from . import concurrency  # just the concurrency check. No actual imports
 from .api import Api, get_pixels, set_pixel, handle_sane_ratelimit, Pixel
 from .cli import arguments
