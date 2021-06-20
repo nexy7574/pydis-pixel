@@ -1,7 +1,8 @@
 __pycache__
 *.png
 log.txt
-assets/auth.txt
+auth.txt
+assets/*
 .vscode
 .idea
 venv

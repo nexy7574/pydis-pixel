@@ -16,7 +16,9 @@ api = Api(
 if arguments.download:
     api.get_pixels((1920, 1080)).save("./canvas.png")
     print("Canvas downloaded to ./canvas.png!")
-    # Don't exit
+    # Don't exit unless -E is used
+    if arguments.download_exit:
+        exit(0)
 
 
 def query_params():
