@@ -38,7 +38,7 @@ class Api:
     OOP API Container
     """
 
-    def __init__(self, base: str = "https://pixels.pythondiscord.com", *, auth: str, session: ClientSession = None):
+    def __init__(self, base: str = "https://pixels.pythondiscord.com", *, auth: str):
         self.session = requests.session()
         self.base = base
         self.auth = auth
@@ -49,6 +49,16 @@ class Api:
         self.sync_ratelimit("get_pixel")
         self.sync_ratelimit("get_pixels")
         self.sync_ratelimit("set_pixel")
+        self._src = None
+
+    @property
+    def image(self):
+        return self._src
+
+    @image.setter
+    def image(self, value):
+        from .image_process import map_pixels
+        self._src = map_pixels(get_pixels(value), rgba=True)
 
     def __del__(self):
         self.session.close()
@@ -156,10 +166,14 @@ class Api:
         :param colour: #hex000
         :return:
         """
-        if int(colour) == 0x0:
-            return
+        if len(colour) == 8 and int(colour[6:], 16) <= 0x55:
+            print("[DEBUG]", (x, y, colour), "is transparent!")
+            return  # transparent
+        else:
+            colour = colour[:6]
         pixel = self.get_pixel(x, y)
         if pixel.hex == colour:
+            print("[DEBUG]", (x, y, colour), "is already painted.")
             return
         return self.blind_set_pixel(x, y, colour)
 
@@ -224,12 +238,12 @@ class Api:
         print(Fore.RED + "[DEBUG]" + Fore.LIGHTBLACK_EX + " Synced ratelimit for", endpoint, verbose=True)
 
 
-def get_pixels(img) -> List[Tuple[int, int, Tuple[int, int, int]]]:
+def get_pixels(img) -> List[Tuple[int, int, Tuple[int, int, int, int]]]:
     """
-    Fetches an array of [x, y, (r, g, b)] in the image, with x, y being the x,y co-ords and rgb being the rgb values.
+    Fetches an array of [x, y, (r, g, b, a)] in the image, with x, y being the x,y co-ords and rgb being the rgb values.
 
     :param img: the PIL.Image
-    :return: List[Tuple[int, int, Tuple[int, int, int]]]
+    :return: List[Tuple[int, int, Tuple[int, int, int, int]]]
     """
     pixels = []
     for y in range(img.height):
