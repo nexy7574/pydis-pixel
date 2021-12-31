@@ -1,4 +1,4 @@
-pillow
-requests
-colorama
-aiohttp
+httpx==0.21.1
+python-dotenv===0.19.2
+rich==10.16.1
+pillow==8.4.0
