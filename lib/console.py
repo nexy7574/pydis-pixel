@@ -46,7 +46,7 @@ class CustomConsole(Console):
 
 console = CustomConsole(
     soft_wrap=True,
-    no_color=arguments.no_color,
+    no_color=arguments.no_colour,
     force_interactive=os.getenv("FORCE_INTERACTIVE_TERMINAL", None),
     theme=Theme(
         {
@@ -58,4 +58,5 @@ console = CustomConsole(
             "critical": "bold red",
         }
     ),
+    log_path=False,  # always displays console.py:33
 )

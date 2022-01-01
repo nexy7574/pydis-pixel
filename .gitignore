@@ -5,3 +5,5 @@ assets/auth.txt
 .vscode
 .idea
 venv
+pixels
+*.jp*g
